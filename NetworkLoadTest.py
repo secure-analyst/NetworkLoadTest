@@ -53,11 +53,16 @@ def randomip():
         third = random.randint(1, 254)
         fourth = random.randint(1, 254)
         ip = f"{first}.{second}.{third}.{fourth}"
-        if first == 10: continue 
-        if first == 172 and 16 <= second <= 31: continue  
-        if first == 192 and second == 168: continue 
-        if first == 169 and second == 254: continue 
-        if first == 127: continue 
+        if first == 10:
+            continue 
+        if first == 172 and 16 <= second <= 31:
+            continue  
+        if first == 192 and second == 168:
+            continue 
+        if first == 169 and second == 254: 
+            continue 
+        if first == 127: 
+            continue 
         return ip
 
 def ip_validation_src(args):
@@ -351,4 +356,5 @@ if __name__ == "__main__":
         asyncio.run(udp_flood(args))
     elif args.command == "tcpflood":
         ip_validation_target(args)
+
         asyncio.run(tcp_flood(args))
