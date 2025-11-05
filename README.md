@@ -100,7 +100,7 @@ options:
   --quantity QUANTITY   number of connections
   --delay DELAY         delay after each bunch
   --duration DURATION   duration of the attack(in seconds)
-  --timeout TIMEOUT     tcp conection timeout
+  --timeout TIMEOUT     tcp connection timeout
 
 SYNFLOOD
 --------
