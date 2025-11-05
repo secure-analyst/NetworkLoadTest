@@ -17,6 +17,11 @@ The author is not responsible for any misuse, damage, or legal consequences.
 - Cross-platform support (Windows, Linux, macOS)
 "ip spoofing is available with syn, icmp, and udp"
 
+## Requirements
+- Python 3.8+
+- aiohttp
+- requests
+- scapy
 
 ## Installation
 
@@ -65,19 +70,21 @@ options:
 
 UDPFLOOD
 --------
-usage: NetworkLoadTest.py icmpflood [-h] --quantity QUANTITY --target_ip TARGET_IP [--src SRC] [--duration DURATION]
-                                    [--weight WEIGHT] [--delay DELAY] [--ttl TTL]
+usage: NetworkLoadTest.py udpflood [-h] --target_ip TARGET_IP [--quantity QUANTITY] [--weight WEIGHT] [--delay DELAY]
+                                   [--duration DURATION] [--src SRC] [--port PORT] [--ttl TTL]
 
 options:
   -h, --help            show this help message and exit
-  --quantity QUANTITY   number of requests per bunch
   --target_ip TARGET_IP
                         target ip
-  --src SRC             source ip (random by default)
-  --duration DURATION   duration of the attack(in seconds)
+  --quantity QUANTITY   number of requests per bunch
   --weight WEIGHT       packet size
   --delay DELAY         delay after each bunch
+  --duration DURATION   duration of the attack(in seconds)
+  --src SRC             source ip (random by default)
+  --port PORT           destination port
   --ttl TTL             time to live for packets
+
 
 TCPFLOOD
 --------
