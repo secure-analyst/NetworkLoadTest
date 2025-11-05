@@ -183,7 +183,7 @@ async def http_get_flood(args):
         async with aiohttp.ClientSession(timeout=timeout_info) as session:
             await statuscode(session, args)
             start_time = time.time()
-            useragent= user_agent()
+            useragent = user_agent()
             while True:
                 if time.time() - start_time >= args.duration:
                     break
@@ -399,4 +399,5 @@ if __name__ == "__main__":
     elif args.command == "tcpflood":
         ip_validation_target(args)
         asyncio.run(tcp_flood(args))
+
 
