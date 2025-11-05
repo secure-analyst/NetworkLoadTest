@@ -378,6 +378,8 @@ tcp_parser.add_argument("--delay", type=int, default=1, help="delay after each b
 tcp_parser.add_argument("--duration", type=int, default=60, help="duration of the attack(in seconds)")
 tcp_parser.add_argument("--timeout", type=int, default=2, help="tcp connection timeout")
 
+
+
 if __name__ == "__main__":
     args = parser.parse_args()
     if args.command == "httpflood":
@@ -393,13 +395,6 @@ if __name__ == "__main__":
     elif args.command == "udpflood":
         if args.src != "random":
             ip_validation_src(args)
-        asyncio.run(udp_flood(args))
-    elif args.command == "tcpflood":
-        ip_validation_target(args)
-        asyncio.run(tcp_flood(args))
-        asyncio.run(synflood(args)) 
-    elif args.command == "udpflood":
-        ip_validation_src(args)
         asyncio.run(udp_flood(args))
     elif args.command == "tcpflood":
         ip_validation_target(args)
