@@ -3,9 +3,9 @@
 **Educational Purpose Only** - Asyncio Network Stress Testing Tool
 
 ## ⚠️ DISCLAIMER
-This tool is for authorized security testing and educational purposes ONLY.
-Use only on systems you own or have explicit written permission to test.
-Unauthorized use may be illegal and violate terms of service.
+FOR AUTHORIZED SECURITY TESTING AND EDUCATIONAL USE ONLY.
+USE ONLY ON SYSTEMS YOU OWN OR HAVE EXPLICIT WRITTEN PERMISSION TO TEST.
+UNAUTHORIZED USE IS ILLEGAL AND MAY RESULT IN CRIMINAL CHARGES.
 The author is not responsible for any misuse, damage, or legal consequences.
 
 ## Features
