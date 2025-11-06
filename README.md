@@ -37,16 +37,16 @@ pip install -r requirements.txt
 
 # Usage
 ## HTTP Flood
-python NetworkLoadTest.py httpflood --url https://example.com/ --quantity 100 --duration 30 --delay 1 --proxies http://proxy1.com:8080 http://proxy2.com:8080
+python NetworkLoadTest.py httpflood --url https://example.com/ --quantity 10 --duration 30 --delay 1 --proxies http://proxy1.com:8080 http://proxy2.com:8080
 
 ## UDP Flood
-python NetworkLoadTest.py udpflood --target_ip 192.168.1.1 --quantity 200 --duration 45 --port 53
+python NetworkLoadTest.py udpflood --target_ip 192.168.1.1 --quantity 20 --duration 45 --port 53
 
 ## ICMP Flood
-python NetworkLoadTest.py icmpflood --target_ip 192.168.1.1 --quantity 1000 --duration 30 --weight 64
+python NetworkLoadTest.py icmpflood --target_ip 192.168.1.1 --quantity 10 --duration 30 --weight 64
 
 ## SYN Flood
-python NetworkLoadTest.py synflood --target_ip 192.168.1.1 --quantity 500 --duration 60 --port 80
+python NetworkLoadTest.py synflood --target_ip 192.168.1.1 --quantity 50 --duration 60 --port 80
 
 ## TCP Flood
 python NetworkLoadTest.py tcpflood --target_ip 192.168.1.1 --quantity 50 --duration 60 --port 443 --timeout 2
