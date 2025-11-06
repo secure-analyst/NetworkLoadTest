@@ -15,6 +15,7 @@ THE AUTHOR IS NOT RESPONSIBLE FOR ANY MISUSE, DAMAGE, OR LEGAL CONSEQUENCES.
 - UDP Flood (UDP packet bombardment)
 - SYN Flood (TCP SYN packet flooding)
 - Cross-platform support (Windows, Linux, macOS)
+
 "ip spoofing is available with syn, icmp, and udp"
 
 ## Requirements
