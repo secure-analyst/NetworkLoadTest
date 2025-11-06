@@ -9,7 +9,7 @@ UNAUTHORIZED USE IS ILLEGAL AND MAY RESULT IN CRIMINAL CHARGES.
 THE AUTHOR IS NOT RESPONSIBLE FOR ANY MISUSE, DAMAGE, OR LEGAL CONSEQUENCES.
 
 ## Features
-- HTTP GET Flood (with proxy support)
+- HTTP GET Flood (with proxy and random user agent support)
 - ICMP Flood (raw ICMP packet flooding)
 - TCP Flood (TCP connection exhaustion)
 - UDP Flood (UDP packet bombardment)
