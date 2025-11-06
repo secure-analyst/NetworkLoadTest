@@ -33,7 +33,6 @@ def disclaimer():
     ==============================================================
     """ + reset)
 
-
 def packet_validation(args):
     if hasattr(args, "weight"):
         if args.weight > max_packet_size:
@@ -43,7 +42,6 @@ def packet_validation(args):
                 sys.exit()
             elif size_answer.lower() in ["y", "yes"]:
                 pass
-    
         else:
             pass
     else:
@@ -62,8 +60,7 @@ def timeout_validation(args):
             sys.exit()
         else:
             pass
-    
-
+            
 def ip_validation(args):
     if args.command  in ["icmpflood", "synflood", "udpflood"]:
         if args.src != "random":
@@ -86,8 +83,7 @@ def ip_validation(args):
             sys.exit()
     else:
         pass
-
-
+        
 def port_validation(args):
     if hasattr(args, "port"):
         if args.port > 65535 or args.port <= 0:
@@ -131,7 +127,6 @@ def url_validation(args):
             sys.exit()
     else:
         pass
-
 
 def proxy_validation(args):
     if hasattr(args, "proxies") and args.proxies:
@@ -202,9 +197,6 @@ def randomip():
             continue 
         return ip
 
-
-
-
 async def statuscode(session, args):
     proxy, x_forwarded_for = proxy_helper(args)
     async with session.get(args.url,
@@ -232,7 +224,6 @@ async def statuscode(session, args):
             status_helper.append(1)
         else:
             print(f"sent {args.quantity} status code {status}")
-
 
 def Keyboard_interrupt_helper():
     print("stopped by user:")
@@ -480,3 +471,4 @@ if __name__ == "__main__":
         asyncio.run(udp_flood(args))
     elif args.command == "tcpflood":
         asyncio.run(tcp_flood(args))
+
